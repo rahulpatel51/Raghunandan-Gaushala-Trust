@@ -1,16 +1,24 @@
-"use client"
+"use client";
 
-import { useRef } from "react"
-import { motion, useInView } from "framer-motion"
-import { Phone, Mail, MapPin, Send } from "lucide-react"
+import { useRef, useState } from "react";
+import { motion, useInView } from "framer-motion";
+import { Phone, Mail, MapPin, Send } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Contact() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, amount: 0.2 })
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+  });
+  const [loading, setLoading] = useState(false);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -20,12 +28,46 @@ export default function Contact() {
         staggerChildren: 0.1,
       },
     },
-  }
+  };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const scriptURL =
+      "https://script.google.com/macros/s/AKfycbzzJvUoprTQkTJJho3guKNztmlLnpMhWMMAANfFPpuwxlgjW9uIwBGnYTs1aTNGJmK4/exec";
+
+    try {
+      const response = await fetch(scriptURL, {
+        method: "POST",
+        mode: "no-cors", // CORS workaround for Google Apps Script
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      alert("Form submitted successfully!");
+      setFormData({ name: "", email: "", subject: "", message: "" });
+    } catch (error: any) {
+      console.error("❌ Fetch Error:", error);
+      alert("Submission failed! Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section id="contact" ref={ref} className="py-20 relative overflow-hidden">
@@ -104,24 +146,6 @@ export default function Contact() {
                 </div>
               </div>
             </div>
-
-            <div className="bg-gradient-to-r from-emerald-50 to-amber-50 p-6 rounded-xl shadow-sm">
-              <h4 className="font-bold text-gray-900 mb-4">Visiting Hours</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">Monday to Saturday:</span>
-                  <span className="text-gray-700">9:00 AM to 5:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">Sunday:</span>
-                  <span className="text-gray-700">10:00 AM to 4:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">Cow Feeding Time:</span>
-                  <span className="text-gray-700">7:00 AM and 4:00 PM</span>
-                </div>
-              </div>
-            </div>
           </motion.div>
 
           <motion.div
@@ -131,7 +155,7 @@ export default function Contact() {
           >
             <h3 className="text-2xl font-bold text-gray-900 mb-8">Send a Message</h3>
 
-            <form className="space-y-6 bg-white p-8 rounded-xl shadow-lg">
+            <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-xl shadow-lg">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">
@@ -140,6 +164,8 @@ export default function Contact() {
                   <Input
                     type="text"
                     id="name"
+                    value={formData.name}
+                    onChange={handleChange}
                     className="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
                     placeholder="Your Name"
                   />
@@ -151,6 +177,8 @@ export default function Contact() {
                   <Input
                     type="email"
                     id="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     className="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
                     placeholder="Your Email"
                   />
@@ -164,6 +192,8 @@ export default function Contact() {
                 <Input
                   type="text"
                   id="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
                   className="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
                   placeholder="Subject"
                 />
@@ -175,6 +205,8 @@ export default function Contact() {
                 </label>
                 <Textarea
                   id="message"
+                  value={formData.message}
+                  onChange={handleChange}
                   rows={5}
                   className="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
                   placeholder="Your Message"
@@ -183,17 +215,19 @@ export default function Contact() {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white py-6 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all group"
+                disabled={loading}
+                className={`w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white py-6 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all group ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
                 size="lg"
               >
-                <span>Send Message</span>
-                <Send className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                {loading ? "Sending..." : "Send Message"}
+                {!loading && <Send className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />}
               </Button>
             </form>
           </motion.div>
         </div>
       </div>
     </section>
-  )
+  );
 }
-
