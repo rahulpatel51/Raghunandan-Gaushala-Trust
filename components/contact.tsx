@@ -50,15 +50,11 @@ export default function Contact() {
     try {
       const response = await fetch(scriptURL, {
         method: "POST",
-        mode: "no-cors", // CORS workaround for Google Apps Script
+        mode: "no-cors", 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-
+      
       alert("Form submitted successfully!");
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (error: any) {
